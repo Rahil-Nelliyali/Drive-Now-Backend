@@ -36,12 +36,12 @@ class CarListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(renter=self.request.user)
 
-class HomeListCar(APIView):
+class HomeListCar(RetrieveAPIView):
     def get(self, request):
         queryset = Car.objects.filter(is_active=True)
         serializer = CarSerializer(queryset, many=True)
+        lookup_field = 'id'
         return Response(serializer.data)
-
 
 class CarDeleteView(APIView):
     def delete(self, request, car_id):

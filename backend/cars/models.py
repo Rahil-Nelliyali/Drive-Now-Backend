@@ -31,7 +31,7 @@ class Car(models.Model):
     description = models.CharField(max_length=600, null=False)
     category = models.ForeignKey(CarCategory, on_delete=models.CASCADE)
     image = models.ImageField(upload_to='photos/cars')
-    is_active = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
     price_per_day = models.DecimalField(max_digits=10, decimal_places=2)
     is_approved = models.BooleanField(default=True)
     is_rejected = models.BooleanField(default=False)
