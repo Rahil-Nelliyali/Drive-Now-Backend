@@ -8,17 +8,33 @@ from renter.models import Renter
 from .serializers import CarSerializer, CarCategorySerializer, PostCarSerializer
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import generics
 
-
-
-class CarCategoryListCreateView(ListCreateAPIView):
-    queryset = CarCategory.objects.filter(is_active=True)
+class CarCategoryListCreateView(generics.ListCreateAPIView):
+    
     serializer_class = CarCategorySerializer
+    def get_queryset(self):
+        # Get the logged-in seller's ID (renter ID) from the request's user
+        renter_id = self.request.user.id
+        print("Logged-in Renter ID:", renter_id)   # Filter the queryset to show only categories created by the logged-in seller
+        queryset = CarCategory.objects.filter(renter_id=renter_id)
+        return queryset
 
-class CarListCreateView(ListCreateAPIView):
-    queryset = Car.objects.all()
+    def perform_create(self, serializer):
+        serializer.save(renter=self.request.user)
+
+class CarListCreateView(generics.ListCreateAPIView):
+    
     serializer_class = CarSerializer
+    def get_queryset(self):
+        # Get the logged-in seller's ID (renter ID) from the request's user
+        renter_id = self.request.user.id
+        print("Logged-in Renter ID:", renter_id)   # Filter the queryset to show only categories created by the logged-in seller
+        queryset = Car.objects.filter(renter_id=renter_id)
+        return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(renter=self.request.user)
 
 class HomeListCar(APIView):
     def get(self, request):
@@ -66,14 +82,16 @@ class CreateCar(APIView):
             return Response(serializer.data)
         return Response({'msg': 'Car not found'}, status=404)
 
-
 class CreateCarCategory(APIView):
     def post(self, request, format=None):
         serializer = CarCategorySerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({'msg': 'Car category created'}, status=status.HTTP_201_CREATED)
+        else:
+            print(serializer.errors)  # Add this line to print the serializer errors
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class CategoryDeleteView(APIView):
     def delete(self, request, cat_id):

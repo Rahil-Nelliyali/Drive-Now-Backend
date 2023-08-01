@@ -1,7 +1,10 @@
 from rest_framework import serializers
-from base.models import User
+from base.models import User, Renter
 from rest_framework.validators import UniqueValidator
 from cars.models import Car
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
@@ -22,3 +25,7 @@ class CarSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
         
+class RenterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Renter
+        fields = '__all__'

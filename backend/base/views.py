@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .serializers import UserSerializer, CarSerializer
+from .serializers import UserSerializer, CarSerializer, RenterSerializer
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
@@ -17,22 +17,8 @@ from rest_framework.generics import ListCreateAPIView
 from rest_framework import status
 from django.shortcuts import reverse
 from rest_framework import generics 
+from django.db.models import Q
 
-
-class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-
-        # Add custom claims
-        token['username'] = user.username
-        token['is_tutor'] =user.is_staff
-        token['is_admin']=user.is_superadmin
-        # ...
-
-        return token
-class MyTokenObtainPairView(TokenObtainPairView):
-    serializer_class = MyTokenObtainPairSerializer
 
 @api_view(['GET'])
 def getRoutes(request):
@@ -43,6 +29,29 @@ def getRoutes(request):
 
     return Response(routes)
 
+
+
+class AuthView(TokenObtainPairView):
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        token = response.data['access']
+        response.data['token'] = token
+        response.data.pop('access', None)
+        response.data.pop('refresh', None)
+        email = request.data.get('email')
+        user = User.objects.get(email=email)
+        
+        response.data['user'] = {
+            "email" : str(user.email) ,
+            "is_renter":bool(user.is_renter),
+            'userID':int(user.id),
+            "is_active":bool(user.is_active),
+            "is_admin":bool(user.is_superadmin),
+            "is_staff":bool(user.is_staff),
+            "name":str(user.first_name + ' ' + user.last_name)
+        }
+        return response
+    
 
 
 class UserRegistration(APIView):
@@ -90,8 +99,63 @@ def activate(request, uidb64, token):
 
         return HttpResponseRedirect('http://localhost:3000/login/')
     
+
+
+class RenterRegistration(APIView):
+    def post(self, request, format=None):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+
+            # Generate the activation URL
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+            activation_url = reverse('activaterenter', kwargs={'uidb64': uid, 'token': token})
+            activation_url = request.build_absolute_uri(activation_url)
+
+            # Send email verification
+            current_site = get_current_site(request)
+            mail_subject = 'Please activate your account'
+            message = render_to_string('verification_email_renter.html', {
+                'user': user,
+                'domain': current_site.domain,
+                'activation_url': activation_url,
+            })
+            to_email = user.email
+            send_email = EmailMessage(mail_subject, message, to=[to_email])
+            send_email.send()
+
+            return Response({'msg': 'Registration Success'})
+
+        return Response({'msg': 'Registration Failed'})
+
+@api_view(['GET'])
+def activaterenter(request, uidb64, token):
+    try:
+
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = User._default_manager.get(pk = uid)
+    except(TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user is not None and default_token_generator.check_token(user, token):
+        print('renter checked')
+        
+        user.is_staff = True
+        user.save()
+      
+
+        return HttpResponseRedirect('http://localhost:3000/rentersignin/')
+    
+
+
 class Listuser(generics.ListCreateAPIView):
-    queryset = User.objects.filter(is_admin=False)
+    queryset = User.objects.filter(Q(is_admin=False) & Q(is_renter=False))
+
+    serializer_class = UserSerializer
+    
+class Listrenter(generics.ListCreateAPIView):
+    queryset = User.objects.filter(Q(is_admin=False) & Q(is_staff=True)) 
     serializer_class = UserSerializer
     
     
@@ -102,6 +166,15 @@ class BlockUserView(APIView):
         user = User.objects.get(id=pk)
         print(user.is_active)
         user.is_active = not user.is_active
+        user.save()
+        return Response({'msg': 200})
+
+class BlockRenterView(APIView):
+    def get(self, request, pk):
+        user = User.objects.get(id=pk)
+        print(user.is_active)
+        user.is_active = not user.is_active
+        user.is_renter = not user.is_renter
         user.save()
         return Response({'msg': 200})
     

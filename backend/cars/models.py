@@ -1,5 +1,6 @@
 from django.db import models
-from renter.models import Renter
+from django.contrib.auth import get_user_model
+from base.models import User
 
 
 
@@ -8,6 +9,7 @@ class CarCategory(models.Model):
     description = models.CharField(max_length=50)
     image = models.ImageField(upload_to='photos/car_categories')
     is_active = models.BooleanField(default=True)
+    renter = models.ForeignKey(User, on_delete=models.CASCADE, related_name='car_categories')
 
     def __str__(self):
         return self.name
@@ -33,8 +35,7 @@ class Car(models.Model):
     price_per_day = models.DecimalField(max_digits=10, decimal_places=2)
     is_approved = models.BooleanField(default=True)
     is_rejected = models.BooleanField(default=False)
-    renter = models.ForeignKey(Renter, on_delete=models.SET_NULL, null=True, blank=True)
-
+    renter = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cars')
 
 
     
@@ -42,4 +43,3 @@ class Car(models.Model):
         return self.name
     
   
-

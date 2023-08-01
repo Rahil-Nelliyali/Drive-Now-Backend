@@ -18,6 +18,7 @@ class MyAccountManager(BaseUserManager):
         extra_fields.setdefault('is_active', True)
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superadmin', True)
+        extra_fields.setdefault('is_superuser', True)
 
         if extra_fields.get('is_admin') is not True:
             raise ValueError('Superuser must have is_admin=True.')
@@ -35,7 +36,6 @@ class User(AbstractUser):
     last_name = models.CharField(max_length=50)
     email = models.EmailField(max_length=100, unique=True)
     phone_number = models.CharField(max_length=50)
-    driving_license_number = models.CharField(max_length=50, blank=True)
     username = models.CharField(max_length=50, unique=True)
     date_joined = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(auto_now_add=True)
@@ -43,6 +43,7 @@ class User(AbstractUser):
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
     is_superadmin = models.BooleanField(default=False)
+    is_renter = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username','first_name','last_name','phone_number']
@@ -57,3 +58,10 @@ class User(AbstractUser):
 
     def has_module_perms(self, app_label):
         return True
+
+class Renter(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
+    # Add any additional fields specific to staff users here
+
+    def __str__(self):
+        return self.user.email

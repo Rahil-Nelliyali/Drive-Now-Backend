@@ -6,12 +6,30 @@ from rest_framework import generics
 from rest_framework import permissions
 from .models import Renter
 from rest_framework.decorators import api_view
-from .serializers import RenterSerializer
 from django.views.decorators.csrf import csrf_exempt
-
-from .serializers import  RenterSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import status
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+class MyRenterTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Add custom claims for renters (sellers)
+        token['username'] = user.username
+        token['is_tutor'] = user.is_staff
+        token['is_admin'] = user.is_superuser
+        token['is_renter'] = True  # Custom claim for renters (sellers)
+        # ...
+
+        return token
+
+class MyRenterTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyRenterTokenObtainPairSerializer
+
+class RenterLoginView(TokenObtainPairView):
+    serializer_class = MyRenterTokenObtainPairSerializer
 
 
 class RenterRegister(APIView):
@@ -37,16 +55,10 @@ class RenterRegister(APIView):
         return Response({'message': 'Renter registered successfully', 'renter_id': renter_id}, status=status.HTTP_201_CREATED)
 
 
-class RenterList(generics.ListCreateAPIView):
-   queryset = Renter.objects.all()
-   serializer_class = RenterSerializer
-   
+
 
     
 
-class RenterDetail(generics.RetrieveUpdateDestroyAPIView):
-   queryset = Renter.objects.all()
-   serializer_class = RenterSerializer
 
 
 from rest_framework.views import APIView

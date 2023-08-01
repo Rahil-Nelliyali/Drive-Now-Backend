@@ -9,6 +9,8 @@ class Renter(models.Model):
     password=models.CharField(max_length=100)
     mobile_no=models.CharField(max_length=100,default='')
     is_active = models.BooleanField(default=False)
+    is_renter = models.BooleanField(default=False)
+
   
 
     def __str__(self):
