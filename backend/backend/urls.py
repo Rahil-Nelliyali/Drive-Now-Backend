@@ -9,5 +9,6 @@ urlpatterns = [
     path('api-renter/',include('renter.urls')),
     path('api-auth/',include('rest_framework.urls')),
     path('cars/',include('cars.urls')),
+    path('payment/',include('payment.urls')),
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

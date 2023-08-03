@@ -173,3 +173,78 @@ class SingleCarDetailView(RetrieveAPIView):
     queryset = Car.objects.all()
     serializer_class = CarSerializer
     lookup_field = 'id'
+
+
+from .models import CarSlot
+from .serializers import CarSlotSerializer, PostCarSlotSerializers
+from rest_framework.generics import ListAPIView
+import datetime
+# for displaying slots of individual cars
+
+class GetCarSlotsInHome(APIView):
+    def get(self,request,car_id):
+        print(car_id)
+        slot = CarSlot.objects.filter(carr=car_id,is_booked=False)
+        print(slot)
+        serializer = CarSlotSerializer(slot,many=True)
+
+        return Response(serializer.data)
+
+from rest_framework.permissions import IsAuthenticated
+
+
+class SlotCreateAPIView(APIView):
+
+    def post(self, request, format = None):
+        serializer = PostCarSlotSerializers(data=request.data)
+        if serializer.is_valid():
+            car = serializer.validated_data['car']
+            date = serializer.validated_data['date']
+            start_time = serializer.validated_data['start_time']
+            end_time = serializer.validated_data['end_time']
+            slot_duration = int(serializer.validated_data['slot_duration'])
+            slot_count = (datetime.datetime.combine(date, end_time) - datetime.datetime.combine(date, start_time)) // datetime.timedelta(minutes=slot_duration)
+
+            slots = []
+            current_time = start_time
+            for _ in range(slot_count):
+                slot = CarSlot(
+                    car=car,
+                    date=date,
+                    start_time=current_time,
+                    end_time=(datetime.datetime.combine(date, current_time) + datetime.timedelta(minutes=slot_duration)).time(),
+                    status=True,
+                    slot_duration=slot_duration,
+                )
+                slots.append(slot)
+                current_time = (datetime.datetime.combine(date, current_time) + datetime.timedelta(minutes=slot_duration)).time()
+            serializer.save()
+            CarSlot.objects.bulk_create(slots)
+            # Return the newly created slot data in the response
+            return Response({'msg': 'Slot created'}, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request, car_id=None):
+        if car_id is not None:
+            queryset = CarSlot.objects.filter(id=car_id)
+            serializer = CarSlotSerializer(queryset)
+            return Response(serializer.data)
+        return Response({'msg': 'Slot not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    
+class GetCarSlots(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, car_id):
+        try:
+            car_slots = CarSlot.objects.filter(car=car_id)
+            serializer = CarSlotSerializer(car_slots, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class SingleCarSlotDetailView(RetrieveAPIView):
+    queryset = CarSlot.objects.all()
+    serializer_class = CarSlotSerializer
+    lookup_field = 'car_id'

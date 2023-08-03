@@ -48,6 +48,7 @@ INSTALLED_APPS = [
      'base',
      'renter',
      'cars',
+     'payment',
 
 ]
 

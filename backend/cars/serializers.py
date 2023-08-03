@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from cars.models import Car, CarCategory
+from cars.models import Car, CarCategory , CarSlot
 
 class CarCategorySerializer(serializers.ModelSerializer):
     
@@ -30,3 +30,16 @@ class PostCarSerializer(serializers.ModelSerializer):
     class Meta:
         model = Car
         fields = '__all__'
+
+class CarSlotSerializer(serializers.ModelSerializer):
+    car = CarSerializer()
+    
+    class Meta:
+        model = CarSlot
+        fields = "__all__"
+
+class  PostCarSlotSerializers(serializers.ModelSerializer):
+     class Meta:
+          model = CarSlot
+          fields = "__all__"
+
