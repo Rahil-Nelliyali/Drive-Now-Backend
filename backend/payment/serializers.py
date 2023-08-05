@@ -11,3 +11,8 @@ class CarBookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = CarBooking
         fields = '__all__'
+
+class CarBookingUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CarBooking
+        fields = ['status']

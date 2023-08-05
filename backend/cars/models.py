@@ -46,11 +46,7 @@ class Car(models.Model):
 class CarSlot(models.Model):
     car = models.ForeignKey(Car, on_delete=models.CASCADE)
     date = models.DateField()
-    start_time = models.TimeField()
-    end_time = models.TimeField()
-    status = models.BooleanField(default=True)
-    slot_duration = models.IntegerField()
     is_booked = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.car.name} - {self.date} - {self.start_time} to {self.end_time}"
+        return f"{self.car.name} - {self.date}"

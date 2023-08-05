@@ -1,6 +1,6 @@
 from django.urls import path
 from base.views import Singleuser
-from .views import CarCategoryListCreateView, CarListCreateView, SingleCarSlotDetailView,SingleCarDetailView,HomeListCar, CarDeleteView, CarUpdateView, CreateCar, CreateCarCategory, CategoryDeleteView, CategoryUpdateView, ApproveCar, RejectCar, BlockCar, MyCars
+from .views import CarCategoryListCreateView, CarSlotsListView,CarListCreateView, SingleCarSlotDetailView,SingleCarDetailView,HomeListCar, CarDeleteView, CarUpdateView, CreateCar, CreateCarCategory, CategoryDeleteView, CategoryUpdateView, ApproveCar, RejectCar, BlockCar, MyCars
 from . import views
 
 urlpatterns = [
@@ -29,6 +29,8 @@ urlpatterns = [
     path('getslots/<int:car_id>/',views.GetCarSlots.as_view(),name='getCarSlotsInHome'),
 
     path('single-slot/<int:car_id>/', SingleCarSlotDetailView.as_view(), name='single_car_detail'),
+    path('slots/<int:id>/', CarSlotsListView.as_view(), name='car_slots_list'),
+
 
 
 ]

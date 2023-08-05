@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.generics import ListCreateAPIView, RetrieveAPIView
 from rest_framework.views import APIView
@@ -200,26 +201,11 @@ class SlotCreateAPIView(APIView):
         if serializer.is_valid():
             car = serializer.validated_data['car']
             date = serializer.validated_data['date']
-            start_time = serializer.validated_data['start_time']
-            end_time = serializer.validated_data['end_time']
-            slot_duration = int(serializer.validated_data['slot_duration'])
-            slot_count = (datetime.datetime.combine(date, end_time) - datetime.datetime.combine(date, start_time)) // datetime.timedelta(minutes=slot_duration)
-
-            slots = []
-            current_time = start_time
-            for _ in range(slot_count):
-                slot = CarSlot(
-                    car=car,
-                    date=date,
-                    start_time=current_time,
-                    end_time=(datetime.datetime.combine(date, current_time) + datetime.timedelta(minutes=slot_duration)).time(),
-                    status=True,
-                    slot_duration=slot_duration,
-                )
-                slots.append(slot)
-                current_time = (datetime.datetime.combine(date, current_time) + datetime.timedelta(minutes=slot_duration)).time()
-            serializer.save()
-            CarSlot.objects.bulk_create(slots)
+            if CarSlot.objects.filter(car=car, date=date).exists():
+                return Response({'msg': 'Slot already exists'}, status=status.HTTP_400_BAD_REQUEST)
+            serializer.save(is_booked=False)
+            # Create a new slot with the given car and date
+           
             # Return the newly created slot data in the response
             return Response({'msg': 'Slot created'}, status=status.HTTP_201_CREATED)
 
@@ -231,7 +217,6 @@ class SlotCreateAPIView(APIView):
             serializer = CarSlotSerializer(queryset)
             return Response(serializer.data)
         return Response({'msg': 'Slot not found'}, status=status.HTTP_404_NOT_FOUND)
-
     
 class GetCarSlots(APIView):
     permission_classes = [IsAuthenticated]
@@ -245,6 +230,22 @@ class GetCarSlots(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class SingleCarSlotDetailView(RetrieveAPIView):
-    queryset = CarSlot.objects.all()
     serializer_class = CarSlotSerializer
-    lookup_field = 'car_id'
+
+    def get_object(self):
+        car_id = self.kwargs.get('car_id')
+        date = self.request.query_params.get('date')  # Assuming you pass the date as a query parameter
+        queryset = CarSlot.objects.filter(car_id=car_id, date=date)
+        return get_object_or_404(queryset)
+    
+
+from rest_framework.generics import ListAPIView
+from .models import CarSlot
+from .serializers import CarSlotSerializer
+
+class CarSlotsListView(ListAPIView):
+    serializer_class = CarSlotSerializer
+
+    def get_queryset(self):
+        car_id = self.kwargs.get('id')
+        return CarSlot.objects.filter(car_id=car_id)

@@ -4,7 +4,7 @@ from base.models import User, Renter
 from cars.models import Car, CarSlot
 import razorpay
 from datetime import datetime
-from .serializers import CarBookingSerializer, CarSerializer, CarSlotSerializer
+from .serializers import  CarBookingUpdateSerializer,CarBookingSerializer, CarSerializer, CarSlotSerializer
 from rest_framework.response import Response
 import json
 from .models import CarBooking
@@ -86,7 +86,7 @@ class Handle_payment_success(APIView):
             elif key == 'razorpay_signature':
                 raz_signature = res[key]
 
-        order = CarBooking.objects.get(appointment_payment_id=ord_id)
+        order = CarBooking.objects.get(booking_payment_id=ord_id)
 
         data = {
             'razorpay_order_id': ord_id,
@@ -102,7 +102,7 @@ class Handle_payment_success(APIView):
         check = client.utility.verify_payment_signature(data)
 
 
-        order.isPaid = True
+        order.is_paid = True
         order.save()
         slot = CarSlot.objects.get(id=slot)
         slot.is_booked = True
@@ -117,11 +117,14 @@ class Handle_payment_success(APIView):
         return Response(res_data)
     
 
+from rest_framework.permissions import IsAuthenticated
 
-class BookingListView(ListAPIView):
+from rest_framework.generics import ListCreateAPIView, RetrieveAPIView
+
+class BookingListView(RetrieveAPIView):
+    queryset = CarBooking.objects.all()
     serializer_class = CarBookingSerializer
-    def get_queryset(self):
-        return CarBooking.objects.all()
+    lookup_field = 'user_id'
 
 
 class RenterBookingsAPIView(APIView):
@@ -135,19 +138,49 @@ class RenterBookingsAPIView(APIView):
         except CarBooking.DoesNotExist:
             return Response("Bookings not found", status=status.HTTP_404_NOT_FOUND)
 
-
 @api_view(['PUT'])
 def Update_booking(request, booking_id):
     try:
         booking = CarBooking.objects.get(id=booking_id)
     except CarBooking.DoesNotExist:
-        return Response({"message": "Booking not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'Booking not found'}, status=404)
 
-    new_status = request.data.get('status')
-    if not new_status:
-        return Response({"message": "Status is required"}, status=status.HTTP_400_BAD_REQUEST)
+    if request.user != booking.car.renter:
+        return Response({'error': 'You do not have permission to update this booking'}, status=403)
 
-    booking.status = new_status
-    booking.save()
+    serializer = CarBookingUpdateSerializer(booking, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=200)
+    else:
+        return Response(serializer.errors, status=400)
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
-    return Response({"message": "Booking status updated successfully"})
+from .models import CarBooking
+from .serializers import CarBookingSerializer
+
+@api_view(['GET'])
+def get_user_bookings(request):
+    user_id = request.query_params.get('user')
+
+    bookings = CarBooking.objects.filter(user__id=user_id)
+    serializer = CarBookingSerializer(bookings, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+def get_renter_bookings(request):
+    user_id = request.query_params.get('user')
+    cars_added_by_renter = Car.objects.filter(renter_id=user_id)
+
+    bookings = CarBooking.objects.filter(car__in=cars_added_by_renter)
+    serializer = CarBookingSerializer(bookings, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def get_all_bookings(request):
+    bookings = CarBooking.objects.all()
+    serializer = CarBookingSerializer(bookings, many=True)
+    return Response(serializer.data)
