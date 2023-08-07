@@ -29,6 +29,7 @@ urlpatterns = [
     path('getslots/<int:car_id>/',views.GetCarSlots.as_view(),name='getCarSlotsInHome'),
 
     path('single-slot/<int:car_id>/', SingleCarSlotDetailView.as_view(), name='single_car_detail'),
+    
     path('slots/<int:id>/', CarSlotsListView.as_view(), name='car_slots_list'),
 
 

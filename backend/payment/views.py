@@ -4,13 +4,17 @@ from base.models import User, Renter
 from cars.models import Car, CarSlot
 import razorpay
 from datetime import datetime
-from .serializers import  CarBookingUpdateSerializer,CarBookingSerializer, CarSerializer, CarSlotSerializer
+from .serializers import  CarBookingUpdateSerializer,CarBookingSerializer, OrderSerializer
 from rest_framework.response import Response
 import json
-from .models import CarBooking
+from .models import CarBooking, Order
 from rest_framework.generics import ListAPIView
 from rest_framework import status
 from rest_framework.decorators import api_view
+from decimal import Decimal
+from .signals import order_paid_signal, booking_updated_signal
+from django.core.mail import send_mail
+
 
 
 
@@ -107,6 +111,9 @@ class Handle_payment_success(APIView):
         slot = CarSlot.objects.get(id=slot)
         slot.is_booked = True
         slot.save()
+
+        # Sending email notifications using signals
+        order_paid_signal.send(sender=self.__class__, order=order)
     
      
         res_data = {
@@ -151,9 +158,42 @@ def Update_booking(request, booking_id):
     serializer = CarBookingUpdateSerializer(booking, data=request.data)
     if serializer.is_valid():
         serializer.save()
+        booking_updated_signal.send(sender=Update_booking, booking=booking)
+
         return Response(serializer.data, status=200)
     else:
         return Response(serializer.errors, status=400)
+    
+@api_view(['PUT'])
+def cancel_booking(request, booking_id):
+    try:
+        
+        booking = CarBooking.objects.get(id=booking_id)
+        
+    except CarBooking.DoesNotExist:
+        return Response({'error': 'Booking not found'}, status=404)
+
+    
+
+    serializer = CarBookingUpdateSerializer(booking, data=request.data)
+    if serializer.is_valid():
+        if booking.status == 'cancelled':
+            return Response({'error': 'Booking is already cancelled'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if booking.is_paid:
+            
+            
+            
+
+
+            serializer.save()
+            booking_updated_signal.send(sender=cancel_booking, booking=booking)
+            return Response(serializer.data, status=200)
+        else:
+            return Response(serializer.errors)
+    else:
+        return Response(serializer.errors, status=400)
+    
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -184,3 +224,42 @@ def get_all_bookings(request):
     bookings = CarBooking.objects.all()
     serializer = CarBookingSerializer(bookings, many=True)
     return Response(serializer.data)
+
+from django.dispatch import receiver
+from .signals import order_paid_signal, booking_updated_signal
+from django.core.mail import send_mail
+from django.conf import settings
+
+from django.urls import reverse
+
+@receiver(order_paid_signal)
+def send_order_paid_notification(sender, order, **kwargs):
+    user_redirect = "http://localhost:3000/mybookings"  
+    user_subject = 'Order Processing'
+    user_message = f'Thank you for your order! Your order with ID {order.booking_payment_id} has been successfully placed. Please wait for confirmation. You can view your bookings <a href="{user_redirect}">here</a>.'
+    user_recipient_list = [order.user.email]
+    
+    renter_redirect = "http://localhost:3000/renterbookings"  
+    renter_subject = 'New Order Received'
+    renter_message = f'A new order with ID {order.booking_payment_id} has been received. Please review and confirm the order. You can manage your bookings <a href="{renter_redirect}">here</a>.'
+    renter_recipient_list = [order.car.renter.email]
+
+    # Send messages to user and renter
+    send_mail(user_subject, '', settings.DEFAULT_FROM_EMAIL, user_recipient_list, html_message=user_message)
+    send_mail(renter_subject, '', settings.DEFAULT_FROM_EMAIL, renter_recipient_list, html_message=renter_message)
+
+@receiver(booking_updated_signal)
+def send_booking_updated_notification(sender, booking, **kwargs):
+    user_redirect = "http://localhost:3000/mybookings"  
+    user_subject = 'Booking Update'
+    user_message = f'Your booking with ID {booking.id} has been {booking.status}. You can view your bookings <a href="{user_redirect}">here</a>.'
+    user_recipient_list = [booking.user.email]
+
+    renter_redirect = "http://localhost:3000/renterbookings"  
+    renter_subject = 'Booking Update'
+    renter_message = f'The booking with ID {booking.id} has been {booking.status}. You can manage your bookings <a href="{renter_redirect}">here</a>.'
+    renter_recipient_list = [booking.car.renter.email]
+
+    # Send messages to user and renter
+    send_mail(user_subject, '', settings.DEFAULT_FROM_EMAIL, user_recipient_list, html_message=user_message)
+    send_mail(renter_subject, '', settings.DEFAULT_FROM_EMAIL, renter_recipient_list, html_message=renter_message)
