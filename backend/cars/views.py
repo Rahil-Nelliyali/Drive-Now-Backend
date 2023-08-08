@@ -164,7 +164,7 @@ class MyCars(APIView):
 
 @api_view(['GET'])
 def get_cars_by_renter(request):
-    renter_id = request.user.id  # Assuming you are using TokenAuthentication or SessionAuthentication
+    renter_id = request.user.id  
     cars = Car.objects.filter(renter_id=renter_id)
     serializer = CarSerializer(cars, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
@@ -180,7 +180,6 @@ from .models import CarSlot
 from .serializers import CarSlotSerializer, PostCarSlotSerializers
 from rest_framework.generics import ListAPIView
 import datetime
-# for displaying slots of individual cars
 
 class GetCarSlotsInHome(APIView):
     def get(self,request,car_id):

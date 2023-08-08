@@ -22,7 +22,11 @@ class CarBooking(models.Model):
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
         ('complete', 'Complete'),
-        ('cancelled', 'Cancelled')
+        ('cancelled', 'Cancelled'),
+        ('picked_up', 'Picked Up'),
+        ('returned', 'Returned'),
+        ('late', 'Late Return'),
+        ('damage', 'Damage Reported'),
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     booking_payment_id = models.CharField(max_length=100)
@@ -30,5 +34,23 @@ class CarBooking(models.Model):
     is_paid = models.BooleanField(default=False)
     booking_date = models.DateTimeField(auto_now=True)
 
+    late_return_charges = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    damage_charges = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    def calculate_total_charges(self):
+        total_charges = self.car.price_per_day * self.get_booking_duration()
+
+        if self.late_return_charges:
+            total_charges += self.late_return_charges
+
+        if self.damage_charges:
+            total_charges += self.damage_charges
+
+        return total_charges
+
+    def get_booking_duration(self):
+        return 1
+
     def __str__(self):
-        return f"{self.user.username} - {self.car.name} - {self.slot.start_time}"
+        return f"{self.user.username} - {self.car.name} - {self.slot.date}"
+    

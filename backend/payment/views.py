@@ -144,7 +144,6 @@ class RenterBookingsAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except CarBooking.DoesNotExist:
             return Response("Bookings not found", status=status.HTTP_404_NOT_FOUND)
-
 @api_view(['PUT'])
 def Update_booking(request, booking_id):
     try:
@@ -157,12 +156,17 @@ def Update_booking(request, booking_id):
 
     serializer = CarBookingUpdateSerializer(booking, data=request.data)
     if serializer.is_valid():
+        if serializer.validated_data.get('status') == 'late':
+            late_return_charges = serializer.validated_data.get('late_return_charges')
+            if late_return_charges is not None:
+                booking.late_return_charges = late_return_charges
         serializer.save()
         booking_updated_signal.send(sender=Update_booking, booking=booking)
 
         return Response(serializer.data, status=200)
     else:
         return Response(serializer.errors, status=400)
+
     
 @api_view(['PUT'])
 def cancel_booking(request, booking_id):
@@ -173,6 +177,8 @@ def cancel_booking(request, booking_id):
     except CarBooking.DoesNotExist:
         return Response({'error': 'Booking not found'}, status=404)
 
+    booking.slot.is_booked = False
+    booking.slot.save()
     
 
     serializer = CarBookingUpdateSerializer(booking, data=request.data)
@@ -181,11 +187,6 @@ def cancel_booking(request, booking_id):
             return Response({'error': 'Booking is already cancelled'}, status=status.HTTP_400_BAD_REQUEST)
 
         if booking.is_paid:
-            
-            
-            
-
-
             serializer.save()
             booking_updated_signal.send(sender=cancel_booking, booking=booking)
             return Response(serializer.data, status=200)

@@ -15,7 +15,20 @@ class CarBookingSerializer(serializers.ModelSerializer):
 class CarBookingUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = CarBooking
-        fields = ['status']
+        fields = ['status', 'late_return_charges']
+        
+    def validate(self, data):
+        # Validate 'status' field
+        status = data.get('status')
+        if status == 'late':
+            # Ensure 'late_return_charges' is provided when status is 'late'
+            late_return_charges = data.get('late_return_charges')
+            if late_return_charges is None:
+                raise serializers.ValidationError("Late charges are required when status is 'late'")
+            # You can perform additional validation on 'late_return_charges' if needed
+
+        return data
+
 
 class OrderSerializer(serializers.ModelSerializer):
     class Meta:
