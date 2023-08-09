@@ -47,6 +47,6 @@ class CarSlot(models.Model):
     car = models.ForeignKey(Car, on_delete=models.CASCADE)
     date = models.DateField()
     is_booked = models.BooleanField(default=False)
-
+   
     def __str__(self):
-        return f"{self.car.name} - {self.date}"
+        return f"{self.car.name} - {self.date} "

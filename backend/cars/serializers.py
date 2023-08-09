@@ -42,4 +42,3 @@ class  PostCarSlotSerializers(serializers.ModelSerializer):
      class Meta:
           model = CarSlot
           fields = "__all__"
-

@@ -10,14 +10,14 @@ from .serializers import CarSerializer, CarCategorySerializer, PostCarSerializer
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import generics
-
+from datetime import datetime, timedelta
+from django.utils import timezone
 class CarCategoryListCreateView(generics.ListCreateAPIView):
     
     serializer_class = CarCategorySerializer
     def get_queryset(self):
-        # Get the logged-in seller's ID (renter ID) from the request's user
         renter_id = self.request.user.id
-        print("Logged-in Renter ID:", renter_id)   # Filter the queryset to show only categories created by the logged-in seller
+        print("Logged-in Renter ID:", renter_id)  
         queryset = CarCategory.objects.filter(renter_id=renter_id)
         return queryset
 
@@ -28,9 +28,8 @@ class CarListCreateView(generics.ListCreateAPIView):
     
     serializer_class = CarSerializer
     def get_queryset(self):
-        # Get the logged-in seller's ID (renter ID) from the request's user
         renter_id = self.request.user.id
-        print("Logged-in Renter ID:", renter_id)   # Filter the queryset to show only categories created by the logged-in seller
+        print("Logged-in Renter ID:", renter_id)  
         queryset = Car.objects.filter(renter_id=renter_id)
         return queryset
 
@@ -42,6 +41,12 @@ class HomeListCar(RetrieveAPIView):
         queryset = Car.objects.filter(is_active=True)
         serializer = CarSerializer(queryset, many=True)
         lookup_field = 'id'
+        return Response(serializer.data)
+    
+class HomeListLocation(RetrieveAPIView):
+    def get(self, request):
+        queryset = CarCategory.objects.all()
+        serializer = CarCategorySerializer(queryset, many=True)
         return Response(serializer.data)
 
 class CarDeleteView(APIView):
@@ -200,6 +205,8 @@ class SlotCreateAPIView(APIView):
         if serializer.is_valid():
             car = serializer.validated_data['car']
             date = serializer.validated_data['date']
+            start_time = serializer.validated_data['start_time']
+            end_time = serializer.validated_data['end_time']
             if CarSlot.objects.filter(car=car, date=date).exists():
                 return Response({'msg': 'Slot already exists'}, status=status.HTTP_400_BAD_REQUEST)
             serializer.save(is_booked=False)
@@ -207,8 +214,9 @@ class SlotCreateAPIView(APIView):
            
             # Return the newly created slot data in the response
             return Response({'msg': 'Slot created'}, status=status.HTTP_201_CREATED)
-
+        print(serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
     def get(self, request, car_id=None):
         if car_id is not None:
