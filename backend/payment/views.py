@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from base.models import User, Renter
-from cars.models import Car, CarSlot
+from cars.models import Car, CarSlot, Location
 import razorpay
 from datetime import datetime
 from .serializers import (
@@ -35,6 +35,12 @@ class Start_payment(APIView):
             slot = request.data["slot"]
             current_slot = CarSlot.objects.get(id=slot)
 
+            pickup_location_id = request.data["pickup_location"]
+            pickup_location = Location.objects.get(id=pickup_location_id)
+
+            dropoff_location_id = request.data["dropoff_location"]
+            dropoff_location = Location.objects.get(id=dropoff_location_id)
+
             PUBLIC_KEY = "rzp_test_t7mDyb37sLmED8"
             SECRET_KEY = "4YMuQlfTvyvuyHgdtpyoxkDW"
 
@@ -55,6 +61,8 @@ class Start_payment(APIView):
                 booking_date=datetime.now().date(),
                 car=car,
                 slot=current_slot,
+                pickup_location=pickup_location,
+                dropoff_location=dropoff_location,
             )
 
             serializer = CarBookingSerializer(order)
@@ -252,6 +260,7 @@ def get_user_bookings(request):
     user_id = request.query_params.get("user")
 
     bookings = CarBooking.objects.filter(user__id=user_id)
+
     serializer = CarBookingSerializer(bookings, many=True)
     return Response(serializer.data)
 
