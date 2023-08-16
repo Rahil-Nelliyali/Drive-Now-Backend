@@ -189,6 +189,27 @@ def Update_booking(request, booking_id):
             late_return_charges = serializer.validated_data.get("late_return_charges")
             if late_return_charges is not None:
                 booking.late_return_charges = late_return_charges
+        elif serializer.validated_data.get("status") == "rejected":
+            # Initiate refund using Razorpay API
+            PUBLIC_KEY = "rzp_test_t7mDyb37sLmED8"
+            SECRET_KEY = "4YMuQlfTvyvuyHgdtpyoxkDW"
+            # Convert Decimal to float before creating the refund data
+            refund_amount = float(booking.car.price_per_day) * 100
+
+            client = razorpay.Client(auth=(PUBLIC_KEY, SECRET_KEY))
+            # Fetch payment details using the order ID
+
+            # Retrieve payment ID from payment details
+            payment_id = booking.booking_payment_id
+            print(payment_id)
+            refund_data = {
+                "payment_id": payment_id,
+                "amount": refund_amount,
+                "notes": {"reason": "User cancelled order"},
+            }
+            refund = client.refund.create(data=refund_data)
+            booking.status = "cancelled"
+            booking.is_paid = False
         serializer.save()
         booking_updated_signal.send(sender=Update_booking, booking=booking)
 
@@ -238,6 +259,7 @@ def cancel_booking(request, booking_id):
             }
             refund = client.refund.create(data=refund_data)
             booking.status = "cancelled"
+            booking.is_paid = False
             serializer.save()
             refund = client.refund.fetch(refund["id"])
             booking_updated_signal.send(sender=cancel_booking, booking=booking)

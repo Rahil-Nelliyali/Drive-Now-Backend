@@ -42,7 +42,7 @@ class CarListCreateView(generics.ListCreateAPIView):
 
 class HomeListCar(RetrieveAPIView):
     def get(self, request):
-        queryset = Car.objects.filter(is_active=True)
+        queryset = Car.objects.all()
         serializer = CarSerializer(queryset, many=True)
         lookup_field = "id"
         return Response(serializer.data)
