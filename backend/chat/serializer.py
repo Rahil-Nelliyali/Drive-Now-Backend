@@ -1,0 +1,18 @@
+from rest_framework import serializers
+from .models import Room, Message
+from base.serializers import UserSerializer
+from base.models import User
+
+
+class RoomSerializer(serializers.ModelSerializer):
+    renter = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+
+    class Meta:
+        model = Room
+        fields = "__all__"
+
+
+class MessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Message
+        fields = ("id", "author", "content", "timestamp")
