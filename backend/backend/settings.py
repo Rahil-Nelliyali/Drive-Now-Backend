@@ -3,6 +3,7 @@ from pathlib import Path
 import os
 from datetime import timedelta
 from decouple import config
+import cloudinary_storage
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,6 +27,8 @@ INSTALLED_APPS = [
     "chat",
     "daphne",
     "channels",
+    "cloudinary",
+    "cloudinary_storage",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -228,3 +231,11 @@ EMAIL_HOST_USER = "drivenowsmtp@gmail.com"
 EMAIL_HOST_PASSWORD = "robgnbcklnasmnje"
 
 EMAIL_USE_TLS = True
+
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": "dttm3xepj",
+    "API_KEY": "369189231799235",
+    "API_SECRET": "2Qh9RW_mhJcpMtAznl3C2VghVa4",
+}
+
+DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
