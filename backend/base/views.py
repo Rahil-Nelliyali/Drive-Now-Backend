@@ -152,7 +152,7 @@ def activaterenter(request, uidb64, token):
 
 
 class Listuser(generics.ListCreateAPIView):
-    queryset = User.objects.filter(Q(is_admin=False) & Q(is_renter=False))
+    queryset = User.objects.filter(Q(is_admin=False) & Q(is_staff=False))
 
     serializer_class = UserSerializer
 
