@@ -220,53 +220,52 @@ def Update_booking(request, booking_id):
 
 from decimal import Decimal
 
+from django.core.exceptions import ObjectDoesNotExist
+
 
 @api_view(["PUT"])
 def cancel_booking(request, booking_id):
     try:
         booking = CarBooking.objects.get(id=booking_id)
-    except CarBooking.DoesNotExist:
-        return Response({"error": "Booking not found"}, status=404)
+    except ObjectDoesNotExist:
+        return Response(
+            {"error": "Booking not found"}, status=status.HTTP_404_NOT_FOUND
+        )
 
-    booking.slot.is_booked = False
-    booking.slot.save()
+    try:
+        booking.slot.is_booked = False
+        booking.slot.save()
 
-    serializer = CarBookingUpdateSerializer(booking, data=request.data)
-    if serializer.is_valid():
+        serializer = CarBookingUpdateSerializer(booking, data=request.data)
+        serializer.is_valid(raise_exception=True)
+
         if booking.status == "cancelled":
             return Response(
                 {"error": "Booking is already cancelled"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if booking.is_paid:
-            # Initiate refund using Razorpay API
-            PUBLIC_KEY = "rzp_test_t7mDyb37sLmED8"
-            SECRET_KEY = "4YMuQlfTvyvuyHgdtpyoxkDW"
-            # Convert Decimal to float before creating the refund data
-            refund_amount = float(booking.car.price_per_day) * 100
+        refund_amount = float(booking.car.price_per_day) * 100
 
-            client = razorpay.Client(auth=(PUBLIC_KEY, SECRET_KEY))
-            # Fetch payment details using the order ID
+        client = razorpay.Client(auth=("YOUR_PUBLIC_KEY", "YOUR_SECRET_KEY"))
 
-            # Retrieve payment ID from payment details
-            payment_id = booking.booking_payment_id
-            print(payment_id)
-            refund_data = {
-                "payment_id": payment_id,
-                "amount": refund_amount,
-                "notes": {"reason": "User cancelled order"},
-            }
-            refund = client.refund.create(data=refund_data)
-            booking.status = "cancelled"
-            booking.is_paid = False
-            serializer.save()
-            refund = client.refund.fetch(refund["id"])
-            booking_updated_signal.send(sender=cancel_booking, booking=booking)
-        return Response(serializer.data, status=200)
+        refund_data = {
+            "payment_id": booking.booking_payment_id,
+            "amount": refund_amount,
+            "notes": {"reason": "User cancelled order"},
+        }
+        refund = client.refund.create(data=refund_data)
 
-    else:
-        return Response(serializer.errors, status=400)
+        booking.status = "cancelled"
+        booking.is_paid = False
+        booking.save()
+        refund = client.refund.fetch(refund["id"])
+        booking_updated_signal.send(sender=cancel_booking, booking=booking)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 from rest_framework.decorators import api_view, permission_classes
