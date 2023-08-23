@@ -178,18 +178,13 @@ def Update_booking(request, booking_id):
     except CarBooking.DoesNotExist:
         return Response({"error": "Booking not found"}, status=404)
 
-    if request.user != booking.car.renter:
-        return Response(
-            {"error": "You do not have permission to update this booking"}, status=403
-        )
-
     serializer = CarBookingUpdateSerializer(booking, data=request.data)
     if serializer.is_valid():
         if serializer.validated_data.get("status") == "late":
             late_return_charges = serializer.validated_data.get("late_return_charges")
             if late_return_charges is not None:
                 booking.late_return_charges = late_return_charges
-        elif serializer.validated_data.get("status") == "rejected":
+        elif serializer.validated_data.get("status") in ["rejected", "cancelled"]:
             # Initiate refund using Razorpay API
             PUBLIC_KEY = "rzp_test_t7mDyb37sLmED8"
             SECRET_KEY = "4YMuQlfTvyvuyHgdtpyoxkDW"

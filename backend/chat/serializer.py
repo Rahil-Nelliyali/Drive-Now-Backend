@@ -15,4 +15,4 @@ class RoomSerializer(serializers.ModelSerializer):
 class MessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
-        fields = ("id", "author", "content", "timestamp")
+        fields = "__all__"
