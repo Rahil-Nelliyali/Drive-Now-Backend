@@ -11,4 +11,4 @@ urlpatterns = [
     path("cars/", include("cars.urls")),
     path("payment/", include("payment.urls")),
     path("", include("chat.urls")),
-] + static(settings.STATIC_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS)
