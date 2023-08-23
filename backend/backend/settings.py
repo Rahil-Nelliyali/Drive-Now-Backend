@@ -197,11 +197,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "base.User"
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://drive-now-client.vercel.app",
-]
+CORS_ALLOWED_ORIGINS = ["*"]
 
 
 CORS_ALLOW_METHODS = [
