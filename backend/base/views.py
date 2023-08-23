@@ -97,7 +97,7 @@ def activate(request, uidb64, token):
         user.is_active = True
         user.save()
 
-        return HttpResponseRedirect("http://localhost:3000/login/")
+        return HttpResponseRedirect("https://drive-now-client.vercel.app/login")
 
 
 class RenterRegistration(APIView):
@@ -148,7 +148,7 @@ def activaterenter(request, uidb64, token):
         user.is_staff = True
         user.save()
 
-        return HttpResponseRedirect("http://localhost:3000/rentersignin/")
+        return HttpResponseRedirect("https://drive-now-client.vercel.app/rentersignin/")
 
 
 class Listuser(generics.ListCreateAPIView):
@@ -213,7 +213,9 @@ class ResetPassword(APIView):
 
             return Response({"msg": "Password Updated Successfully"})
 
-        return HttpResponseRedirect("http://localhost:3000/reset-password/")
+        return HttpResponseRedirect(
+            "https://drive-now-client.vercel.app/reset-password/"
+        )
 
 
 class ChangeImage(APIView):
