@@ -1,21 +1,26 @@
 import json
-from channels.generic.websocket import AsyncWebsocketConsumer
 from .models import Message
+from channels.generic.websocket import WebsocketConsumer
+from asgiref.sync import async_to_sync
 
 
-class ChatConsumer(AsyncWebsocketConsumer):
+class ChatConsumer(WebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         self.room_group_name = "chat_%s" % self.room_name
 
         # Join room group
-        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        async_to_sync(
+            self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        )
 
-        await self.accept()
+        async_to_sync(self.accept())
 
     async def disconnect(self, close_code):
         # Leave room group
-        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        async_to_sync(
+            self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        )
 
     async def receive(self, text_data):
         try:
@@ -34,22 +39,26 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
 
             # Broadcast the message to the room group
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    "type": "chat_message",
-                    "message": new_message.content,
-                    "author": new_message.author,
-                },
+            async_to_sync(
+                self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        "type": "chat_message",
+                        "message": new_message.content,
+                        "author": new_message.author,
+                    },
+                )
             )
 
         except (json.JSONDecodeError, ValueError) as e:
             error_message = {"error": str(e)}
-            await self.send(text_data=json.dumps(error_message))
+            async_to_sync(self.send(text_data=json.dumps(error_message)))
 
     async def chat_message(self, event):
         message = event["message"]
         author = event["author"]
 
         # Send the message to the WebSocket
-        await self.send(text_data=json.dumps({"message": message, "author": author}))
+        async_to_sync(
+            self.send(text_data=json.dumps({"message": message, "author": author}))
+        )
