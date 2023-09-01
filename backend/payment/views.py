@@ -298,15 +298,23 @@ def get_all_bookings(request):
     return Response(serializer.data)
 
 
+from rest_framework import status
+
+
 @api_view(["GET"])
 def get_bookings_for_car(request, car_id):
     try:
-        # Assuming you have a CarBooking model with a 'car' field representing the car
         bookings = CarBooking.objects.filter(car_id=car_id)
+        if not bookings:
+            return Response(
+                {"message": "No bookings found for this car."},
+                status=status.HTTP_204_NO_CONTENT,
+            )
+
         serializer = CarBookingSerializer(bookings, many=True)
         return Response(serializer.data)
     except Exception as e:
-        return Response({"error": str(e)}, status=500)
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 from django.dispatch import receiver
