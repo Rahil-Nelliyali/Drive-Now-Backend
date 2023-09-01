@@ -16,4 +16,5 @@ urlpatterns = [
     ),
     # admin
     path("allbookings/", views.get_all_bookings, name="bookings"),
+    path("get-bookings-for-car/", views.get_bookings_for_car, name="bookings"),
 ]

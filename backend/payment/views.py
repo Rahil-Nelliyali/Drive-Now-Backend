@@ -298,6 +298,17 @@ def get_all_bookings(request):
     return Response(serializer.data)
 
 
+@api_view(["GET"])
+def get_bookings_for_car(request, car_id):
+    try:
+        # Assuming you have a CarBooking model with a 'car' field representing the car
+        bookings = CarBooking.objects.filter(car_id=car_id)
+        serializer = CarBookingSerializer(bookings, many=True)
+        return Response(serializer.data)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
 from django.dispatch import receiver
 from .signals import order_paid_signal, booking_updated_signal
 from django.core.mail import send_mail
