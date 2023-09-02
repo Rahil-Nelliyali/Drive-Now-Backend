@@ -10,15 +10,11 @@ asgi_app = get_asgi_application()
 
 import chat.routing
 
-
-frontend_domain = "drive-now-client.vercel.app"
-
 application = ProtocolTypeRouter(
     {
         "http": asgi_app,
         "websocket": AllowedHostsOriginValidator(
-            AuthMiddlewareStack(URLRouter(chat.routing.websocket_urlpatterns)),
-            allowed_hosts=[frontend_domain],
+            AuthMiddlewareStack(URLRouter(chat.routing.websocket_urlpatterns))
         ),
     }
 )
