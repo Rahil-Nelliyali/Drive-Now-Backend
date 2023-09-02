@@ -327,12 +327,12 @@ from django.urls import reverse
 
 @receiver(order_paid_signal)
 def send_order_paid_notification(sender, order, **kwargs):
-    user_redirect = "http://localhost:3000/mybookings"
+    user_redirect = "https://drive-now-client.vercel.app/mybookings"
     user_subject = "Order Processing"
     user_message = f'Dear valued customer,\n\nWe greatly appreciate your recent order. Your order has been successfully received and is currently being processed. Kindly await confirmation of your order shortly.\n\nFor your convenience, you can track and manage all your bookings by visiting the following link: <a href="{user_redirect}">Booking Management Portal</a>.\n\nShould you require any assistance or have inquiries, please do not hesitate to contact our dedicated customer service team. We are here to provide the utmost support.\n\nThank you for choosing DriveNow.\n\nBest regards,\nTeam DriveNow'
     user_recipient_list = [order.user.email]
 
-    renter_redirect = "http://localhost:3000/renterbookings"
+    renter_redirect = "https://drive-now-client.vercel.app/renterbookings"
     renter_subject = "New Order Received"
     renter_message = f'Dear esteemed partner,\n\nWe are pleased to inform you that a new order has been recieved. Your attention is kindly requested to review and confirm the details of this order at your earliest convenience.\n\nTo facilitate the management of your bookings, please access the following link: <a href="{renter_redirect}">Booking Management Portal</a>.\n\nShould you require any further assistance or have inquiries, please do not hesitate to contact our dedicated support team. We are committed to ensuring a seamless partnership experience.\n\nThank you for choosing DriveNow as your trusted partner.\n\nSincerely,\nTeam DriveNow'
     renter_recipient_list = [order.car.renter.email]
@@ -356,12 +356,12 @@ def send_order_paid_notification(sender, order, **kwargs):
 
 @receiver(booking_updated_signal)
 def send_booking_updated_notification(sender, booking, **kwargs):
-    user_redirect = "http://localhost:3000/mybookings"
+    user_redirect = "https://drive-now-client.vercel.app/mybookings"
     user_subject = "Booking Update"
     user_message = f'Dear valued customer,We are pleased to notify you that your car booking has been successfully updated. Your reservation for the vehicle named {booking.car.name} has been adjusted and confirmed as per your request. To conveniently access and review the latest details of your bookings, kindly click on the following link:<a href="{user_redirect}">here</a>. Should you require any further assistance or have inquiries, please do not hesitate to get in touch with our dedicated support team. We are committed to ensuring your experience with DriveNow is consistently exceptional. We appreciate your trust in DriveNow for your car rental needs and sincerely look forward to the opportunity to serve you again.Best regards,Team DriveNow'
     user_recipient_list = [booking.user.email]
 
-    renter_redirect = "http://localhost:3000/renterbookings"
+    renter_redirect = "https://drive-now-client.vercel.app/renterbookings"
     renter_subject = "Booking Update"
     renter_message = f'Dear {booking.car.renter},\n\nWe wish to inform you that the booking with ID {booking.id} for the car "{booking.car.name}" associated with your account has been successfully updated. This update was requested by the user {booking.user.first_name}.\n\nTo conveniently manage and review your bookings, please access the following link: [Manage Your Bookings](<a href="{renter_redirect}">here</a>).\n\nIf you have any questions or require further assistance, please do not hesitate to contact our dedicated support team. We are committed to ensuring a seamless experience for you and our valued users.\n\nThank you for choosing DriveNow for your car rental services.\n\nBest regards,\nTeam DriveNow'
     renter_recipient_list = [booking.car.renter.email]
