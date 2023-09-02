@@ -24,8 +24,8 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
-    "chat",
     "daphne",
+    "chat",
     "channels",
     "cloudinary",
     "cloudinary_storage",
