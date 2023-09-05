@@ -37,9 +37,6 @@ urlpatterns = [
     path("renters/", Listrenter.as_view(), name="renters"),
     path("blockrenter/<int:pk>/", BlockRenterView.as_view(), name="block-user"),
     path("profile/<int:pk>", GetProfile.as_view(), name="profile"),
-    path("updateprofile/", UpdateProfile.as_view(), name="updateprofile"),
-    path("changepass/", ChangePass.as_view(), name="changepass"),
-    path("updateimage/", ChangeImage.as_view(), name="updateimage"),
     path(
         "getSingleUser/<int:id>/", views.GetSingleUser.as_view(), name="getDoctorInHome"
     ),
