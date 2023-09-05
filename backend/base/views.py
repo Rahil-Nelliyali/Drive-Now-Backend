@@ -1,10 +1,8 @@
-from django.http import JsonResponse
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .serializers import UserSerializer, CarSerializer, RenterSerializer
+from .serializers import UserSerializer, CarSerializer
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
@@ -13,8 +11,6 @@ from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from base.models import User
 from django.http import HttpResponseRedirect
-from rest_framework.generics import ListCreateAPIView
-from rest_framework import status
 from django.shortcuts import reverse
 from rest_framework import generics
 from django.db.models import Q
