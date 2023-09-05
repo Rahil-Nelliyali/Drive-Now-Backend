@@ -8,10 +8,13 @@ from base.models import User
 from renter.models import Renter
 from .serializers import CarSerializer, CarCategorySerializer, PostCarSerializer
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view
 from rest_framework import generics
-from datetime import datetime, timedelta
-from django.utils import timezone
+from .models import CarSlot
+from .serializers import CarSlotSerializer, PostCarSlotSerializers
+from rest_framework.generics import ListAPIView
+from .models import CarSlot, Location
+from .serializers import CarSlotSerializer, LocationSerializer, PostLocationSerializer
 
 
 class CarCategoryListCreateView(generics.ListCreateAPIView):
@@ -103,7 +106,7 @@ class CreateCarCategory(APIView):
                 {"msg": "Car category created"}, status=status.HTTP_201_CREATED
             )
         else:
-            print(serializer.errors)  # Add this line to print the serializer errors
+            print(serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -188,12 +191,6 @@ class SingleCarDetailView(RetrieveAPIView):
     lookup_field = "id"
 
 
-from .models import CarSlot
-from .serializers import CarSlotSerializer, PostCarSlotSerializers
-from rest_framework.generics import ListAPIView
-import datetime
-
-
 class GetCarSlotsInHome(APIView):
     def get(self, request, car_id):
         print(car_id)
@@ -218,9 +215,7 @@ class SlotCreateAPIView(APIView):
                     {"msg": "Slot already exists"}, status=status.HTTP_400_BAD_REQUEST
                 )
             serializer.save(is_booked=False)
-            # Create a new slot with the given car and date
 
-            # Return the newly created slot data in the response
             return Response({"msg": "Slot created"}, status=status.HTTP_201_CREATED)
         print(serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -252,16 +247,9 @@ class SingleCarSlotDetailView(RetrieveAPIView):
 
     def get_object(self):
         car_id = self.kwargs.get("car_id")
-        date = self.request.query_params.get(
-            "date"
-        )  # Assuming you pass the date as a query parameter
+        date = self.request.query_params.get("date")
         queryset = CarSlot.objects.filter(car_id=car_id, date=date)
         return get_object_or_404(queryset)
-
-
-from rest_framework.generics import ListAPIView
-from .models import CarSlot, Location
-from .serializers import CarSlotSerializer, LocationSerializer, PostLocationSerializer
 
 
 class CarSlotsListView(ListAPIView):
@@ -324,8 +312,6 @@ class SingleCarLocationDetailView(RetrieveAPIView):
 
     def get_object(self):
         car_id = self.kwargs.get("car_id")
-        name = self.request.query_params.get(
-            "name"
-        )  # Assuming you pass the date as a query parameter
+        name = self.request.query_params.get("name")
         queryset = Location.objects.filter(car_id=car_id, name=name)
         return get_object_or_404(queryset)
